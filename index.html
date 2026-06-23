@@ -48,6 +48,15 @@
       </div>
     </section>
 
+    <!-- ===== ¿QUIÉN ERES? ===== -->
+    <section class="screen" id="quien">
+      <div class="quienwrap">
+        <div class="qhead">¿Quién eres?</div>
+        <div class="qsub">Se guarda en cada cita que agendes.</div>
+        <div class="qbtns" id="qbtns"></div>
+      </div>
+    </section>
+
     <!-- ===== AGENDA ===== -->
     <section class="screen" id="agenda">
       <div class="apphead">
@@ -56,10 +65,24 @@
           <h2>Agenda</h2>
           <div class="sub" id="agenda-sub">—</div>
         </div>
-        <div class="ghostbtn" id="agenda-search" aria-label="Buscar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg></div>
+        <div class="headright">
+          <button class="whoami" id="whoami" aria-label="Cambiar de persona">—</button>
+          <div class="ghostbtn" id="agenda-search" aria-label="Buscar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg></div>
+        </div>
       </div>
       <div class="scroll">
+        <div class="calhead">
+          <button class="calnav" id="cal-prev" aria-label="Anterior"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+          <button class="callabel" id="cal-label">—</button>
+          <button class="calnav" id="cal-next" aria-label="Siguiente"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></button>
+          <button class="caltoggle" id="cal-toggle">Mes</button>
+        </div>
         <div class="week" id="week"></div>
+        <div class="month" id="month" style="display:none"></div>
+        <div class="totals">
+          <div class="totpill"><span class="tk">Día</span><span class="tv" id="tot-day">$0</span></div>
+          <div class="totpill"><span class="tk">Semana</span><span class="tv" id="tot-week">$0</span></div>
+        </div>
         <div class="daytitle"><b id="dt-day">—</b><span id="dt-count"></span></div>
         <div id="list"></div>
       </div>
@@ -136,6 +159,21 @@
         <h2>Cita</h2>
       </div>
       <div class="scroll" id="detail-body"></div>
+    </section>
+
+    <!-- ===== BUSCAR ===== -->
+    <section class="screen" id="buscar">
+      <div class="formhead">
+        <div class="backb" data-go="agenda"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></div>
+        <h2>Buscar</h2>
+      </div>
+      <div class="scroll">
+        <label class="fld"><span class="lab">Cliente o peludo</span>
+          <input class="inp" id="s-q" placeholder="Ej: Kiara, María…" autocomplete="off" inputmode="search">
+        </label>
+        <div class="shint" id="s-hint">Busca por nombre del peludo o del cliente. Incluye fechas pasadas.</div>
+        <div id="s-res"></div>
+      </div>
     </section>
 
     <!-- tabbar -->

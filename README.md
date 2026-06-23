@@ -1,10 +1,11 @@
 # Jeanntt Agenda 🐾
 
-PWA (app instalable) para que **Ana y Karens** gestionen las citas del grooming móvil
-de Jeanntt. HTML + CSS + JavaScript vanilla, **sin frameworks ni build**.
+PWA (app instalable) para que **Ana, Karens y Jackson** gestionen las citas del grooming
+móvil de Jeanntt. HTML + CSS + JavaScript vanilla, **sin frameworks ni build**.
 
-> **Fase 1 (esta):** datos de ejemplo **en memoria** (no se guardan, no usa localStorage).
-> **Fase 2:** se conecta al backend poniendo una sola variable (`API_BASE`).
+> **Conectada al backend real** (`API_BASE = https://jeanntt-backend.onrender.com`).
+> El token del login se guarda **solo en memoria** (nunca en localStorage); al recargar
+> se vuelve a pedir el PIN. Sin datos de ejemplo.
 
 ---
 
@@ -43,53 +44,68 @@ En Android/Chrome aparece directamente **«Instalar app»**.
 ```
 
 ## Pantallas
-1. **Login** con PIN de 4 dígitos.
-2. **Agenda**: tira de la semana (marca días bloqueados), lista de citas del día, botón **+** flotante.
-3. **Nueva cita**: con precio y duración automáticos al elegir servicio + tamaño.
-4. **Bloquear día**: fecha + motivo + lista de días bloqueados.
-5. **Detalle de cita**: con **Editar** y **Cancelar**.
+1. **Login** con PIN de 4 dígitos (validado contra el backend).
+2. **¿Quién eres?** (Ana / Karens / Jackson): se guarda como `creado_por` en cada cita.
+3. **Agenda**: encabezado con navegación ‹ ›, botón **Semana/Mes**, tira de la semana o
+   **calendario mensual** (marca días con citas y bloqueados), **totales de $** del día y
+   de la semana, lista de citas del día y botón **+** flotante.
+4. **Nueva cita**: con precio y duración automáticos al elegir servicio + tamaño. Desde un
+   día del mes se agenda con semanas de anticipación.
+5. **Bloquear día**: fecha + motivo + lista de días bloqueados.
+6. **Detalle de cita**: muestra quién la **agendó**, botones **WhatsApp** y **Llamar** (si
+   hay teléfono), y **Editar/Cancelar** solo en citas manuales (no en reservas web).
+7. **Buscar**: por nombre del peludo o del cliente en todo el historial (incluye pasadas).
 
 ---
 
 ## ⚙️ Configuración (`js/config.js`)
 
 ```js
-PIN:      '1234',   // PIN de acceso (PLACEHOLDER — cámbialo por el real)
-API_BASE: '',       // vacío = datos de ejemplo. Pon la URL del backend en Fase 2.
-SERVICIOS: [ ... ]  // servicios con precio y duración por tamaño
+API_BASE:    'https://jeanntt-backend.onrender.com', // backend real
+AUTH_PREFIX: 'Bearer ',          // header Authorization ('' si el token va "pelado")
+USUARIOS:    ['Ana','Karens','Jackson'],   // pantalla "¿Quién eres?" + creado_por
+BUSQUEDA_DIAS: { atras: 540, adelante: 365 }, // rango del buscador (incluye pasadas)
+PIN:         '1234',             // solo se usa en modo demo (API_BASE vacío)
+SERVICIOS:   [ ... ]             // servicios con precio y duración por tamaño
 ```
 
-- **PIN:** placeholder `1234`. _(Un PIN en el navegador no es seguridad real; en la Fase 2
-  el login se valida contra el backend.)_
+## 🔌 Backend (conectado)
 
-## 🔌 Conectar el backend (Fase 2)
+El login llama `POST /api/agenda/login {pin}`; el **token** devuelto se guarda en una
+variable JS (**memoria, nunca localStorage**) y viaja en `Authorization` en el resto de
+llamadas. Si el PIN es incorrecto, la app muestra «PIN incorrecto» sin más pistas.
 
-1. Pon la URL en `config.js`: `API_BASE: 'https://tu-backend.com'`
-2. Listo. `api.js` ya trae las llamadas `fetch()` y cambia solo de datos de ejemplo a la red.
-   **El token de la agenda va en el backend / variables de entorno, NUNCA en este código** (repo público).
-
-**Contrato REST que espera `api.js`:**
+**Contrato REST:**
 
 | Método | Ruta | Cuerpo | Devuelve |
 |---|---|---|---|
-| POST | `/auth/login` | `{pin}` | 200 ok / 401 |
-| GET | `/appointments?date=YYYY-MM-DD` | — | `[appt]` |
-| GET | `/appointments/:id` | — | `appt` |
-| POST | `/appointments` | `appt` | `appt` (con id) |
-| PUT | `/appointments/:id` | `appt` | `appt` |
-| DELETE | `/appointments/:id` | — | ok |
-| GET | `/blocks` | — | `[block]` |
-| POST | `/blocks` | `{date, motivo}` | `block` (con id) |
-| DELETE | `/blocks/:id` | — | ok |
+| POST  | `/api/agenda/login` | `{pin}` | `{token}` / 401 |
+| GET   | `/api/citas?from=YYYY-MM-DD&to=YYYY-MM-DD` | — | `[cita]` |
+| POST  | `/api/citas` | `cita` (con `creado_por`) | `cita` (con id) |
+| PATCH | `/api/citas/:id` | `cita` | `cita` |
+| PATCH | `/api/citas/:id/cancelar` | — | ok _(solo manuales)_ |
+| GET   | `/api/bloqueos` | — | `[bloqueo]` |
+| POST  | `/api/bloqueos` | `{fecha, motivo}` | `bloqueo` (con id) |
+| DELETE| `/api/bloqueos/:id` | — | ok |
 
 ```
-appt  = { id, date:'YYYY-MM-DD', time:'HH:MM', cliente, telefono,
-          peludo, tamano, servicio, recordatorio:Number, notas }
-block = { id, date:'YYYY-MM-DD', motivo }
+cita    = { id, fecha:'YYYY-MM-DD', hora:'HH:MM', cliente, telefono, peludo,
+            tamano, servicio, recordatorio:Number, notas, creado_por, precio, estado }
+bloqueo = { id, fecha:'YYYY-MM-DD', motivo }
 ```
+
+> 🔧 **Si el backend usa otros nombres de campo** (p. ej. `mascota` en vez de `peludo`, o
+> `dia` en vez de `fecha`), se ajustan en **un solo sitio**: el objeto `MAP` al inicio de
+> `js/api.js` (`citaFrom`/`citaTo`, `blockFrom`/`blockTo`). La lectura ya es tolerante a
+> varios alias comunes. El detalle de citas usa la caché en memoria (no hay `GET /:id`).
+
+> ⚠️ **CORS:** el backend debe permitir el origen de la PWA
+> (`https://jejg19-wq.github.io`) en `Access-Control-Allow-Origin`, además de los métodos
+> `GET, POST, PATCH, DELETE` y el header `Authorization`. Si una llamada falla por origen,
+> es esto.
 
 ---
 
 ## Nota
-Tras cambiar archivos, sube `CACHE_VERSION` en `sw.js` (ej. `...-v2`) para que el
-service worker sirva la versión nueva.
+Tras cambiar archivos del cascarón, sube `CACHE_VERSION` en `sw.js` (ej. `...-v3`) para que
+el service worker sirva la versión nueva.

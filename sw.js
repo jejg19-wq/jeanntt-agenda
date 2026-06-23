@@ -6,7 +6,7 @@
    y los métodos POST/PUT/DELETE) pasan directo a la red.
    Sube CACHE_VERSION cuando cambies archivos del cascarón.
    ============================================================ */
-const CACHE_VERSION = 'jeanntt-agenda-v1';
+const CACHE_VERSION = 'jeanntt-agenda-v2';
 
 const SHELL = [
   './',

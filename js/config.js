@@ -6,22 +6,35 @@
 window.CONFIG = {
 
   /* ---- Acceso ----
-     PIN de 4 dígitos para entrar. Es un PLACEHOLDER de la Fase 1.
-     Cámbialo por el real cuando lo definan Ana y Karens.
-     OJO: un PIN en el navegador no es seguridad real; en la Fase 2
-     el login se valida contra el backend (ver api.js → login()). */
+     PIN de respaldo SOLO para el modo demo (cuando API_BASE está
+     vacío). Con el backend conectado el login se valida contra
+     POST /api/agenda/login y este valor se ignora. */
   PIN: '1234',
 
-  /* ---- Backend (Fase 2) ----
-     Cuando el backend esté listo, pon aquí su URL base
-     (ej: 'https://api.jeanntt.com'). Mientras esté vacío,
-     la app funciona con datos de ejemplo en memoria.
-     api.js detecta esto y cambia solo a llamadas reales. */
-  API_BASE: '',
+  /* ---- Backend (Fase 2 — CONECTADO) ----
+     URL base del backend real. api.js arma las rutas /api/... sobre
+     esta base. Si la dejas vacía, la app vuelve al modo demo (sin
+     datos de ejemplo: listas vacías). */
+  API_BASE: 'https://jeanntt-backend.onrender.com',
+
+  /* Prefijo del header Authorization. El estándar es 'Bearer '.
+     Si el backend espera el token "pelado" (sin prefijo), pon ''. */
+  AUTH_PREFIX: 'Bearer ',
+
+  /* ---- ¿Quién eres? ----
+     Personas que pueden agendar. Lo elegido se manda como
+     `creado_por` al crear una cita y se muestra en el detalle.
+     También sirve para detectar citas MANUALES (las que agendó
+     el staff) frente a las reservas que entran por la web. */
+  USUARIOS: ['Ana', 'Karens', 'Jackson'],
+
+  /* ---- Buscador ----
+     Rango (en días) que consulta el buscador alrededor de HOY.
+     Incluye fechas pasadas para ver el historial. */
+  BUSQUEDA_DIAS: { atras: 540, adelante: 365 },
 
   /* ---- Catálogo de servicios ----
-     Precio (USD) y duración (min) por servicio y tamaño.
-     En la Fase 2 esto puede venir del backend (api.listServices). */
+     Precio (USD) y duración (min) por servicio y tamaño. */
   SERVICIOS: [
     {
       nombre: 'Baño Básico',
