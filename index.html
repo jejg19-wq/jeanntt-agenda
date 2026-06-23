@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
+<title>Jeanntt Agenda</title>
+<meta name="description" content="Agenda de citas de Jeanntt Grooming — la van rosa 🐾">
+
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1F0833">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Jeanntt Agenda">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+
+<!-- Tipografía de marca -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div class="app">
+
+    <!-- ===== LOGIN ===== -->
+    <section class="screen active" id="login">
+      <div class="loginwrap">
+        <div class="appicon"><img src="icons/icon-192.png" alt="Jeanntt Grooming"></div>
+        <div class="wm">Jeanntt <em>Agenda</em></div>
+        <div class="tag">La agenda de la van rosa 🐾</div>
+        <div class="dots">
+          <div class="dot" data-d="0"></div><div class="dot" data-d="1"></div>
+          <div class="dot" data-d="2"></div><div class="dot" data-d="3"></div>
+        </div>
+        <div class="pad" id="pad">
+          <button class="key">1</button><button class="key">2</button><button class="key">3</button>
+          <button class="key">4</button><button class="key">5</button><button class="key">6</button>
+          <button class="key">7</button><button class="key">8</button><button class="key">9</button>
+          <button class="key blank"></button><button class="key">0</button>
+          <button class="key fn" id="back" aria-label="Borrar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 5H8l-5 7 5 7h13a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2z"/><path d="M15 9l-4 4M11 9l4 4"/></svg></button>
+        </div>
+        <div class="pinhelp">Ingresa tu PIN de 4 dígitos</div>
+      </div>
+    </section>
+
+    <!-- ===== AGENDA ===== -->
+    <section class="screen" id="agenda">
+      <div class="apphead">
+        <div class="badge"><img src="icons/icon-192.png" alt=""></div>
+        <div>
+          <h2>Agenda</h2>
+          <div class="sub" id="agenda-sub">—</div>
+        </div>
+        <div class="ghostbtn" id="agenda-search" aria-label="Buscar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg></div>
+      </div>
+      <div class="scroll">
+        <div class="week" id="week"></div>
+        <div class="daytitle"><b id="dt-day">—</b><span id="dt-count"></span></div>
+        <div id="list"></div>
+      </div>
+    </section>
+
+    <!-- ===== NUEVA CITA ===== -->
+    <section class="screen" id="nueva">
+      <div class="formhead">
+        <div class="backb" data-go="agenda"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></div>
+        <h2 id="nueva-title">Nueva cita</h2>
+      </div>
+      <div class="scroll">
+        <label class="fld"><span class="lab">Cliente</span><input class="inp" id="f-cli" placeholder="Nombre del dueño" autocomplete="off"></label>
+        <label class="fld"><span class="lab">Teléfono (opcional)</span><input class="inp" id="f-tel" placeholder="615…" inputmode="tel" autocomplete="off"></label>
+        <label class="fld"><span class="lab">Peludo</span><input class="inp" id="f-dog" placeholder="Nombre del perrito" autocomplete="off"></label>
+        <div class="fld"><span class="lab">Tamaño</span>
+          <div class="chips" id="f-size">
+            <div class="chip" data-v="Pequeño">Pequeño</div>
+            <div class="chip" data-v="Mediano">Mediano</div>
+            <div class="chip" data-v="Grande">Grande</div>
+            <div class="chip" data-v="XL">XL</div>
+          </div>
+        </div>
+        <label class="fld"><span class="lab">Servicio</span>
+          <select class="inp" id="f-svc">
+            <option value="">Elige un servicio…</option>
+          </select>
+        </label>
+        <div class="readout">
+          <div class="ro"><div class="k">Precio</div><div class="v" id="f-price">—</div></div>
+          <div class="ro dur"><div class="k">Duración aprox.</div><div class="v" id="f-dur">—</div></div>
+        </div>
+        <div class="row2">
+          <label class="fld"><span class="lab">Fecha</span><input class="inp" id="f-date" type="date"></label>
+          <label class="fld"><span class="lab">Hora</span><input class="inp" id="f-time" type="time"></label>
+        </div>
+        <div class="fld"><span class="lab">Recordatorio (suena antes)</span>
+          <div class="chips" id="f-rem">
+            <div class="chip mag" data-v="10">10 min</div>
+            <div class="chip mag" data-v="20">20 min</div>
+            <div class="chip mag" data-v="30">30 min</div>
+          </div>
+        </div>
+        <label class="fld"><span class="lab">Notas (opcional)</span><textarea class="inp" id="f-notes" placeholder="Ej: tocar timbre, perro nervioso, desenredo…"></textarea></label>
+        <button class="cta" id="save-appt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-9"/></svg> <span id="save-appt-label">Guardar cita</span></button>
+      </div>
+    </section>
+
+    <!-- ===== BLOQUEAR DÍA ===== -->
+    <section class="screen" id="bloquear">
+      <div class="formhead">
+        <div class="backb" data-go="agenda"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></div>
+        <h2>Bloquear día</h2>
+      </div>
+      <div class="scroll">
+        <div class="note-help">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+          <span>Bloquea un día completo para que <b>no entren reservas por la web</b>. Úsalo para mantenimiento de la van, descanso o un percance.</span>
+        </div>
+        <label class="fld"><span class="lab">Fecha a bloquear</span><input class="inp" id="b-date" type="date"></label>
+        <label class="fld"><span class="lab">Motivo</span><input class="inp" id="b-reason" placeholder="Ej: mantenimiento de la van" autocomplete="off"></label>
+        <button class="cta" id="save-block"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg> Bloquear este día</button>
+        <div style="margin-top:24px">
+          <span class="lab" style="font-size:12px;font-weight:700;color:var(--lav);text-transform:uppercase;letter-spacing:.6px">Días bloqueados</span>
+          <div id="blocklist" style="margin-top:10px"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== DETALLE ===== -->
+    <section class="screen" id="detalle">
+      <div class="formhead">
+        <div class="backb" data-go="agenda"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></div>
+        <h2>Cita</h2>
+      </div>
+      <div class="scroll" id="detail-body"></div>
+    </section>
+
+    <!-- tabbar -->
+    <nav class="tabbar" id="tabbar" style="display:none">
+      <div class="tab on" data-go="agenda">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>
+        Agenda
+      </div>
+      <div class="fab" data-go="nueva" aria-label="Nueva cita">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+      </div>
+      <div class="tab" data-go="bloquear">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+        Bloquear
+      </div>
+    </nav>
+
+    <div class="toast" id="toast"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-9"/></svg><span id="toast-msg"></span></div>
+  </div>
+
+  <!-- Lógica -->
+  <script src="js/config.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/app.js"></script>
+
+  <!-- Service worker (PWA instalable / offline del cascarón) -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function () {
+        navigator.serviceWorker.register('sw.js').catch(function (e) {
+          console.warn('SW no registrado:', e);
+        });
+      });
+    }
+  </script>
+</body>
+</html>
