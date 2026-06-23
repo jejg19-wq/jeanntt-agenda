@@ -386,11 +386,53 @@
     $('#f-dur').textContent = (d != null) ? '~' + d + ' min' : '—';
   }
 
+  /* ---- selector de hora: desplegable de 15 min (08:00–16:00) + "otra hora" ---- */
+  function buildTimeOptions() {
+    var sel = $('#f-time');
+    sel.innerHTML = '<option value="">Elige hora…</option>';
+    for (var h = 8; h <= 16; h++) {
+      for (var mi = 0; mi < 60; mi += 15) {
+        if (h === 16 && mi > 0) break;             // hasta las 16:00 en punto
+        var v = ('0' + h).slice(-2) + ':' + ('0' + mi).slice(-2);
+        var o = document.createElement('option');
+        o.value = v; o.textContent = Api.to12label(v); // "8:00 AM"
+        sel.appendChild(o);
+      }
+    }
+    var oc = document.createElement('option');
+    oc.value = 'custom'; oc.textContent = 'Otra hora…';
+    sel.appendChild(oc);
+  }
+  function onTimeChange() {
+    var custom = $('#f-time').value === 'custom';
+    $('#f-time-custom-wrap').style.display = custom ? 'block' : 'none';
+    if (custom) $('#f-time-custom').focus();
+  }
+  // hora elegida en formato 'HH:MM' (24h), venga del desplegable o de "otra hora"
+  function getFormTime() {
+    var v = $('#f-time').value;
+    if (v === 'custom') return Api.parseTime($('#f-time-custom').value) || '';
+    return v;
+  }
+  // coloca una hora en el control: si está en la lista de 15 min la selecciona; si no, "otra hora"
+  function setFormTime(t) {
+    var sel = $('#f-time');
+    sel.value = t || '';
+    if (t && sel.value !== t) {                     // no estaba en la lista -> otra hora
+      sel.value = 'custom';
+      $('#f-time-custom').value = Api.to12label(t);
+    } else {
+      $('#f-time-custom').value = '';
+    }
+    onTimeChange();
+  }
+
   function resetForm() {
     $('#f-cli').value = ''; $('#f-tel').value = ''; $('#f-dog').value = '';
     $('#f-svc').value = ''; $('#f-notes').value = '';
     $$('#f-size .chip').forEach(function (x) { x.classList.remove('on'); });
     setChip('#f-rem', 10);
+    setFormTime('');
     updPrice();
   }
 
@@ -400,7 +442,6 @@
     $('#save-appt-label').textContent = 'Guardar cita';
     resetForm();
     $('#f-date').value = state.selected;
-    $('#f-time').value = '';
     show('nueva');
   }
 
@@ -415,7 +456,7 @@
     $('#f-dog').value = a.peludo || '';
     $('#f-svc').value = a.servicio || '';
     $('#f-date').value = a.date;
-    $('#f-time').value = a.time;
+    setFormTime(a.time);
     $('#f-notes').value = a.notas || '';
     setChip('#f-size', a.tamano);
     setChip('#f-rem', a.recordatorio);
@@ -426,6 +467,13 @@
   function saveAppt() {
     var orig = state.editingId ? state.byId[state.editingId] : null;
     var servicio = $('#f-svc').value, tamano = selVal('#f-size');
+
+    // hora: del desplegable (15 min) o de "otra hora" escrita a mano
+    if ($('#f-time').value === 'custom' && $('#f-time-custom').value.trim() && !Api.parseTime($('#f-time-custom').value)) {
+      toast('Revisa la hora (ej: 8:05 AM o 14:05)'); return;
+    }
+    var time = getFormTime();
+
     var payload = {
       cliente: $('#f-cli').value.trim(),
       telefono: $('#f-tel').value.trim(),
@@ -433,12 +481,14 @@
       tamano: tamano,
       servicio: servicio,
       date: $('#f-date').value,
-      time: $('#f-time').value,
+      time: time,
+      duracion: Api.duracion(servicio, tamano),
       recordatorio: parseInt(selVal('#f-rem') || '10', 10),
       notas: $('#f-notes').value.trim(),
       // quién agenda: en edición se conserva el autor original; en alta, el usuario actual
       creado_por: orig ? (orig.creado_por || state.usuario) : state.usuario,
-      precio: Api.precio(servicio, tamano)
+      precio: Api.precio(servicio, tamano),
+      estado: orig ? (orig.estado || 'confirmada') : 'confirmada'
     };
 
     var falta =
@@ -605,6 +655,7 @@
       c.addEventListener('click', function () { setChip('#f-rem', c.getAttribute('data-v')); });
     });
     $('#f-svc').addEventListener('change', updPrice);
+    $('#f-time').addEventListener('change', onTimeChange);
 
     // guardar
     $('#save-appt').addEventListener('click', saveAppt);
@@ -635,6 +686,7 @@
     });
 
     buildServiceOptions();
+    buildTimeOptions();
     setChip('#f-rem', 10);
     renderDots();
     show('login');

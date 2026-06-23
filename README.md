@@ -89,10 +89,14 @@ llamadas. Si el PIN es incorrecto, la app muestra «PIN incorrecto» sin más pi
 | DELETE| `/api/bloqueos/:id` | — | ok |
 
 ```
-cita    = { id, fecha:'YYYY-MM-DD', hora:'HH:MM', cliente, telefono, peludo,
-            tamano, servicio, recordatorio:Number, notas, creado_por, precio, estado }
+cita    = { id, inicio:'YYYY-MM-DDTHH:MM', fecha:'YYYY-MM-DD', hora_label:'8:00 AM',
+            duracion_min:Number, cliente_nombre, perro_nombre, perro_tamano, servicio,
+            precio, creado_por, notas, estado }
 bloqueo = { id, fecha:'YYYY-MM-DD', motivo }
 ```
+
+El front deriva `date`/`time` de `inicio`; al crear/editar envía `inicio` ("YYYY-MM-DDTHH:MM")
+más esos mismos campos. `telefono` y `recordatorio` se mandan como extras best-effort.
 
 > 🔧 **Si el backend usa otros nombres de campo** (p. ej. `mascota` en vez de `peludo`, o
 > `dia` en vez de `fecha`), se ajustan en **un solo sitio**: el objeto `MAP` al inicio de

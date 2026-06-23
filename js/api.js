@@ -56,6 +56,19 @@ window.JeannttApi = (function () {
   function normDate(v) { if (v == null) return ''; var m = String(v).match(/(\d{4})-(\d{2})-(\d{2})/); return m ? (m[1] + '-' + m[2] + '-' + m[3]) : String(v); }
   // normaliza una hora a 'HH:MM'
   function normTime(v) { if (v == null) return ''; var m = String(v).match(/(\d{1,2}):(\d{2})/); return m ? (('0' + m[1]).slice(-2) + ':' + m[2]) : ''; }
+  // 'HH:MM' (24h) -> '8:00 AM'
+  function to12label(t) { if (!t) return ''; var p = String(t).split(':'), hh = parseInt(p[0], 10); if (isNaN(hh)) return ''; var ap = hh >= 12 ? 'PM' : 'AM', h = hh % 12; if (h === 0) h = 12; return h + ':' + (p[1] || '00') + ' ' + ap; }
+  // '8:05 am' / '08:05' / '14:05' / '8.05pm' -> 'HH:MM' (24h) | null
+  function parseTime(s) {
+    s = String(s == null ? '' : s).trim().toLowerCase().replace(/\s+/g, '');
+    if (!s) return null;
+    var m = s.match(/^(\d{1,2})[:.h]?(\d{2})?(am|pm|a|p)?$/);
+    if (!m) return null;
+    var hh = parseInt(m[1], 10), mm = m[2] ? parseInt(m[2], 10) : 0, ap = m[3];
+    if (ap) { if (/p/.test(ap) && hh < 12) hh += 12; if (/a/.test(ap) && hh === 12) hh = 0; }
+    if (hh > 23 || mm > 59) return null;
+    return ('0' + hh).slice(-2) + ':' + ('0' + mm).slice(-2);
+  }
 
   // desempaqueta respuestas envueltas tipo {cita:{...}} o {data:{...}}
   function unwrap(d) { if (d && typeof d === 'object' && !Array.isArray(d)) return d.cita || d.bloqueo || d.data || d.item || d.result || d; return d; }
@@ -74,15 +87,18 @@ window.JeannttApi = (function () {
   var MAP = {
     citaFrom: function (r) {
       if (!r) return null;
+      // el backend manda la fecha+hora en `inicio` ("YYYY-MM-DDTHH:MM"); de ahí derivamos date y time
+      var inicio = pick(r, ['inicio', 'start', 'fecha_hora', 'fechaHora', 'datetime']);
       return {
         id:           pick(r, ['id', '_id', 'cita_id', 'uuid']),
-        date:         normDate(pick(r, ['fecha', 'date', 'dia', 'fecha_cita'])),
-        time:         normTime(pick(r, ['hora', 'time', 'hora_cita'])),
-        cliente:      pick(r, ['cliente', 'nombre_cliente', 'clienta', 'cliente_nombre', 'nombre', 'client']) || '',
-        telefono:     pick(r, ['telefono', 'teléfono', 'tel', 'celular', 'phone', 'whatsapp']) || '',
-        peludo:       pick(r, ['peludo', 'mascota', 'perro', 'perrito', 'nombre_mascota', 'pet']) || '',
-        tamano:       pick(r, ['tamano', 'tamaño', 'size', 'talla']) || '',
+        date:         normDate(pick(r, ['fecha', 'date', 'dia', 'fecha_cita']) || inicio),
+        time:         normTime(pick(r, ['hora_24', 'hora', 'time', 'hora_cita']) || inicio) || parseTime(pick(r, ['hora_label', 'horaLabel'])) || '',
+        cliente:      pick(r, ['cliente_nombre', 'cliente', 'nombre_cliente', 'clienta', 'nombre', 'client']) || '',
+        telefono:     pick(r, ['telefono', 'teléfono', 'cliente_telefono', 'tel', 'celular', 'phone', 'whatsapp']) || '',
+        peludo:       pick(r, ['perro_nombre', 'peludo', 'mascota', 'perro', 'perrito', 'nombre_mascota', 'pet']) || '',
+        tamano:       pick(r, ['perro_tamano', 'perro_tamaño', 'tamano', 'tamaño', 'size', 'talla']) || '',
         servicio:     pick(r, ['servicio', 'service', 'tipo_servicio']) || '',
+        duracion:     toNum(pick(r, ['duracion_min', 'duracion', 'duration', 'duracionMin'])),
         recordatorio: toInt(pick(r, ['recordatorio', 'reminder', 'aviso']), 10),
         notas:        pick(r, ['notas', 'nota', 'notes', 'observaciones', 'comentario']) || '',
         creado_por:   pick(r, ['creado_por', 'creadoPor', 'created_by', 'agendo', 'agendado_por', 'autor']) || '',
@@ -92,20 +108,26 @@ window.JeannttApi = (function () {
         _raw:         r
       };
     },
-    // Lo que se ENVÍA al crear/editar. Ajusta los nombres si el backend difiere.
+    // Lo que se ENVÍA al crear/editar. Nombres EXACTOS del backend.
     citaTo: function (m) {
+      var inicio = (m.date && m.time) ? (m.date + 'T' + m.time) : (m.date || '');
       return {
-        fecha:        m.date,
-        hora:         m.time,
-        cliente:      m.cliente,
-        telefono:     m.telefono,
-        peludo:       m.peludo,
-        tamano:       m.tamano,
-        servicio:     m.servicio,
-        recordatorio: m.recordatorio,
-        notas:        m.notas,
-        creado_por:   m.creado_por,
-        precio:       m.precio
+        inicio:         inicio,                 // "YYYY-MM-DDTHH:MM" (canónico para el backend)
+        fecha:          m.date,
+        hora_label:     to12label(m.time),      // "8:00 AM"
+        duracion_min:   m.duracion,
+        cliente_nombre: m.cliente,
+        perro_nombre:   m.peludo,
+        perro_tamano:   m.tamano,
+        servicio:       m.servicio,
+        precio:         m.precio,
+        creado_por:     m.creado_por,
+        notas:          m.notas,
+        estado:         m.estado || 'confirmada',
+        // extras best-effort: el backend los ignora si no los usa. Si el POST fallara por
+        // campos desconocidos, basta con quitarlos de aquí.
+        telefono:       m.telefono,
+        recordatorio:   m.recordatorio
       };
     },
     blockFrom: function (r) {
@@ -167,13 +189,17 @@ window.JeannttApi = (function () {
     var opts = { method: method, headers: authHeaders(body != null) };
     if (body != null) opts.body = JSON.stringify(body);
     return fetch(CFG.API_BASE + path, opts).then(function (res) {
-      if (!res.ok) {
-        var err = new Error('HTTP ' + res.status);
-        err.status = res.status;
-        throw err;
-      }
-      if (res.status === 204) return null;
-      return res.text().then(function (t) { return safeJSON(t); });
+      return res.text().then(function (t) {
+        if (!res.ok) {
+          // Loguea el error EXACTO del backend (cuerpo incluido) para diagnosticar.
+          console.error('[Jeanntt] ' + method + ' ' + path + ' ->', res.status, t);
+          if (body != null) console.error('[Jeanntt] body enviado:', opts.body);
+          var err = new Error('HTTP ' + res.status + ' en ' + method + ' ' + path + (t ? ' — ' + t.slice(0, 400) : ''));
+          err.status = res.status; err.body = t;
+          throw err;
+        }
+        return safeJSON(t);
+      });
     });
   }
 
@@ -210,6 +236,8 @@ window.JeannttApi = (function () {
     esManual: esManual,
     esCancelada: esCancelada,
     esConfirmada: esConfirmada,
+    to12label: to12label,
+    parseTime: parseTime,
     norm: norm,
     hasToken: function () { return !!_token; },
     logout: function () { setToken(null); },
@@ -244,7 +272,9 @@ window.JeannttApi = (function () {
     // Carga un RANGO de fechas (semana, mes o búsqueda amplia con pasadas).
     listAppointmentsRange: function (fromISO, toISO2) {
       if (!CFG.API_BASE) return delay([]); // demo: sin datos de ejemplo
-      return api('GET', '/api/citas?from=' + encodeURIComponent(fromISO) + '&to=' + encodeURIComponent(toISO2))
+      // +1 día en `to`: cubre las citas del último día aunque el backend filtre por datetime (inicio)
+      var toQ = addDaysISO(toISO2, 1);
+      return api('GET', '/api/citas?from=' + encodeURIComponent(fromISO) + '&to=' + encodeURIComponent(toQ))
         .then(function (d) { return asArray(d).map(MAP.citaFrom); });
     },
 
