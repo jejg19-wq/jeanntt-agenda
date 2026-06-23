@@ -65,7 +65,8 @@
     byId: {},                             // caché id -> cita (alimenta el detalle, sin GET /:id)
     usuario: '',                          // quién está usando la app (¿Quién eres?)
     editingId: null,
-    searchPool: []                        // citas del rango amplio para el buscador
+    searchPool: [],                       // citas del rango amplio para el buscador
+    pushOn: false                         // ¿este dispositivo ya recibe avisos push?
   };
 
   function cacheAppts(list) { (list || []).forEach(function (a) { if (a && a.id != null) state.byId[a.id] = a; }); return list; }
@@ -627,6 +628,122 @@
   }
 
   /* ============================================================
+     AVISOS PUSH (notificaciones de citas)
+     El backend manda los avisos 10/20/30 min antes de cada cita a
+     TODAS las suscripciones. Aquí pedimos permiso, nos suscribimos y
+     registramos el dispositivo en el backend con la persona elegida.
+     ============================================================ */
+  function pushSupported() {
+    return 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+  }
+  // iPhone/iPad (iPadOS se reporta como Mac con pantalla táctil)
+  function isIOS() {
+    return /iphone|ipad|ipod/i.test(navigator.userAgent) ||
+      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  }
+  // ¿abierta como app instalada (no en pestaña del navegador)?
+  function isStandalone() {
+    return (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) ||
+      navigator.standalone === true;
+  }
+  // llave VAPID (base64url) -> Uint8Array para applicationServerKey
+  function urlB64ToUint8Array(base64) {
+    var padding = '='.repeat((4 - base64.length % 4) % 4);
+    var b64 = (base64 + padding).replace(/-/g, '+').replace(/_/g, '/');
+    var raw = atob(b64);
+    var out = new Uint8Array(raw.length);
+    for (var i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i);
+    return out;
+  }
+
+  // pinta el banner de avisos según el estado del dispositivo
+  function renderPushBar() {
+    var bar = $('#pushbar');
+    if (!bar) return;
+
+    // iPhone sin instalar en inicio: el push de iOS solo funciona con la PWA instalada
+    if (isIOS() && !isStandalone()) {
+      bar.className = 'pushbar info';
+      bar.style.display = '';
+      bar.innerHTML = '<span class="pushico">📲</span><div class="pushtxt">Para recibir avisos en iPhone: toca <b>Compartir</b> → <b>Agregar a inicio</b>, y abre la app desde el ícono.</div>';
+      return;
+    }
+    // navegador sin soporte de push: no mostramos nada
+    if (!pushSupported()) { bar.style.display = 'none'; bar.innerHTML = ''; return; }
+    // permiso bloqueado por el usuario
+    if (Notification.permission === 'denied') {
+      bar.className = 'pushbar info';
+      bar.style.display = '';
+      bar.innerHTML = '<span class="pushico">🔕</span><div class="pushtxt">Los avisos están bloqueados. Actívalos para este sitio desde los ajustes del navegador.</div>';
+      return;
+    }
+    // ya activados
+    if (state.pushOn) {
+      bar.className = 'pushbar on';
+      bar.style.display = '';
+      bar.innerHTML = '<span class="pushico">✓</span><div class="pushtxt">Avisos activados ✓</div>';
+      return;
+    }
+    // disponible pero sin activar: botón claro
+    bar.className = 'pushbar';
+    bar.style.display = '';
+    bar.innerHTML = '<button class="pushbtn" id="push-enable">🔔 Activar avisos de citas</button>';
+    $('#push-enable').addEventListener('click', enablePush);
+  }
+
+  // revisa si el dispositivo ya está suscrito (al entrar / cambiar de persona)
+  function refreshPushState() {
+    if (!pushSupported() || (isIOS() && !isStandalone())) { renderPushBar(); return; }
+    navigator.serviceWorker.ready
+      .then(function (reg) { return reg.pushManager.getSubscription(); })
+      .then(function (sub) {
+        state.pushOn = !!sub && Notification.permission === 'granted';
+        // re-sincroniza con el backend por si se reinició o cambió la persona
+        if (state.pushOn) Api.savePushSubscription(sub, state.usuario).catch(function () {});
+        renderPushBar();
+      })
+      .catch(function () { renderPushBar(); });
+  }
+
+  // activa los avisos: permiso -> llave -> suscripción -> registro en el backend
+  function enablePush() {
+    if (!pushSupported()) { toast('Este dispositivo no admite avisos.'); return; }
+    var btn = $('#push-enable');
+    if (btn) btn.disabled = true;
+
+    Notification.requestPermission().then(function (perm) {
+      if (perm !== 'granted') {
+        if (btn) btn.disabled = false;
+        renderPushBar();
+        toast('Permite los avisos para recibir recordatorios.');
+        return;
+      }
+      return navigator.serviceWorker.ready.then(function (reg) {
+        return Api.getPushPublicKey().then(function (key) {
+          if (!key) throw new Error('El backend no devolvió la llave pública.');
+          return reg.pushManager.getSubscription().then(function (existing) {
+            return existing || reg.pushManager.subscribe({
+              userVisibleOnly: true,
+              applicationServerKey: urlB64ToUint8Array(key)
+            });
+          });
+        }).then(function (sub) {
+          return Api.savePushSubscription(sub, state.usuario).then(function () {
+            state.pushOn = true;
+            renderPushBar();
+            toast('Avisos activados ✓');
+          });
+        });
+      });
+    }).catch(function (e) {
+      if (btn) btn.disabled = false;
+      state.pushOn = false;
+      renderPushBar();
+      fail(e, 'No se pudieron activar los avisos.');
+    });
+  }
+
+  /* ============================================================
      ARRANQUE
      ============================================================ */
   function enterApp() {
@@ -637,6 +754,7 @@
     paintWhoami();
     show('agenda');
     refreshAgenda();
+    refreshPushState();
   }
 
   function wire() {

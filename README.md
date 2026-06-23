@@ -55,6 +55,10 @@ En Android/Chrome aparece directamente **«Instalar app»**.
 6. **Detalle de cita**: muestra quién la **agendó**, botones **WhatsApp** y **Llamar** (si
    hay teléfono), y **Editar/Cancelar** solo en citas manuales (no en reservas web).
 7. **Buscar**: por nombre del peludo o del cliente en todo el historial (incluye pasadas).
+8. **Avisos push**: tras elegir persona, la agenda muestra **🔔 Activar avisos de citas**.
+   Pide permiso, se suscribe y registra el dispositivo en el backend con la persona elegida.
+   El robot manda el aviso 10/20/30 min antes de cada cita. En iPhone **debe estar instalada
+   en inicio** (Compartir → Agregar a inicio); si no lo está, la app lo explica.
 
 ---
 
@@ -87,6 +91,8 @@ llamadas. Si el PIN es incorrecto, la app muestra «PIN incorrecto» sin más pi
 | GET   | `/api/bloqueos` | — | `[bloqueo]` |
 | POST  | `/api/bloqueos` | `{fecha, motivo}` | `bloqueo` (con id) |
 | DELETE| `/api/bloqueos/:id` | — | ok |
+| GET   | `/api/push/public-key` | — | llave pública VAPID |
+| POST  | `/api/push/subscribe` | `{subscription, persona}` | ok _(con `Authorization`)_ |
 
 ```
 cita    = { id, inicio:'YYYY-MM-DDTHH:MM', fecha:'YYYY-MM-DD', hora_label:'8:00 AM',

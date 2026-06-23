@@ -284,6 +284,23 @@ select.inp{appearance:none;-webkit-appearance:none;background-image:url("data:im
   border-radius:13px;padding:12px 13px;display:flex;gap:9px;align-items:flex-start}
 .webnote svg{width:17px;height:17px;color:var(--yellow);flex:none;margin-top:1px}
 
+/* ---------- avisos push (banner en la agenda) ---------- */
+.pushbar{margin:2px 0 14px}
+.pushbtn{width:100%;background:var(--magenta);color:#fff;border:none;border-radius:14px;padding:14px;
+  font-family:var(--body);font-weight:800;font-size:15px;cursor:pointer;letter-spacing:.2px;
+  display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 8px 20px rgba(255,31,138,.3)}
+.pushbtn:active{transform:scale(.99);background:var(--magenta-d)}
+.pushbtn:disabled{opacity:.6;cursor:default}
+.pushbar.info,.pushbar.on{display:flex;gap:9px;border-radius:13px;padding:11px 13px;
+  font-size:12.5px;line-height:1.5}
+.pushbar.info{background:var(--bg2);border:1px solid var(--line);color:var(--lav);align-items:flex-start}
+.pushbar.info b{color:var(--cream);font-weight:700}
+.pushbar.on{background:rgba(55,212,154,.12);border:1px solid rgba(55,212,154,.4);color:var(--cream);
+  font-weight:700;align-items:center}
+.pushbar .pushico{flex:none;font-size:15px;line-height:1.35}
+.pushbar.on .pushico{color:var(--green)}
+.pushbar .pushtxt{flex:1}
+
 /* En pantallas grandes (escritorio / vista previa) se centra como
    un teléfono para que se vea intencional; en el móvil va full-screen. */
 @media (min-width:481px){

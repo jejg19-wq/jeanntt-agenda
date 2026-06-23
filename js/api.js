@@ -308,6 +308,31 @@ window.JeannttApi = (function () {
     deleteBlock: function (id) {
       if (!CFG.API_BASE) return delay({ ok: true });
       return api('DELETE', '/api/bloqueos/' + encodeURIComponent(id)).then(function () { return { ok: true }; });
+    },
+
+    /* ---- avisos push (notificaciones de citas) ----
+       El backend expone la llave pública VAPID y guarda la suscripción del
+       dispositivo (protegida con el token de la agenda). El robot luego manda
+       los avisos 10/20/30 min antes de cada cita a todas las suscripciones. */
+
+    // GET /api/push/public-key -> llave pública VAPID (JSON {publicKey} o texto plano)
+    getPushPublicKey: function () {
+      if (!CFG.API_BASE) return Promise.resolve('');
+      return fetch(CFG.API_BASE + '/api/push/public-key', { headers: authHeaders(false) })
+        .then(function (res) {
+          return res.text().then(function (t) {
+            if (!res.ok) { var e = new Error('HTTP ' + res.status + ' en GET /api/push/public-key'); e.status = res.status; e.body = t; throw e; }
+            var d = safeJSON(t);
+            if (d && typeof d === 'object') return d.publicKey || d.public_key || d.key || d.vapidPublicKey || d.applicationServerKey || '';
+            return String(t || '').trim().replace(/^"|"$/g, ''); // llave "pelada"
+          });
+        });
+    },
+
+    // POST /api/push/subscribe { subscription, persona } (Authorization con el token)
+    savePushSubscription: function (subscription, persona) {
+      if (!CFG.API_BASE) return delay({ ok: true });
+      return api('POST', '/api/push/subscribe', { subscription: subscription, persona: persona });
     }
   };
 })();
