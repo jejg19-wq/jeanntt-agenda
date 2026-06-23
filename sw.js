@@ -8,7 +8,7 @@
    y los muestra como notificación. Sube CACHE_VERSION cuando
    cambies archivos del cascarón.
    ============================================================ */
-const CACHE_VERSION = 'jeanntt-agenda-v4';
+const CACHE_VERSION = 'jeanntt-agenda-v5';
 
 const SHELL = [
   './',

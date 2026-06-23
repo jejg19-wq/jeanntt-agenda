@@ -693,16 +693,20 @@
 
   // revisa si el dispositivo ya está suscrito (al entrar / cambiar de persona)
   function refreshPushState() {
-    if (!pushSupported() || (isIOS() && !isStandalone())) { renderPushBar(); return; }
+    // IMPORTANTE: pinta YA (síncrono). El botón debe aparecer sí o sí; no
+    // esperamos al service worker para mostrarlo. La comprobación de la
+    // suscripción solo sirve para "subir" el estado a "Avisos activados ✓".
+    renderPushBar();
+    if (!pushSupported() || (isIOS() && !isStandalone())) return;
     navigator.serviceWorker.ready
       .then(function (reg) { return reg.pushManager.getSubscription(); })
       .then(function (sub) {
         state.pushOn = !!sub && Notification.permission === 'granted';
+        renderPushBar();
         // re-sincroniza con el backend por si se reinició o cambió la persona
         if (state.pushOn) Api.savePushSubscription(sub, state.usuario).catch(function () {});
-        renderPushBar();
       })
-      .catch(function () { renderPushBar(); });
+      .catch(function () { /* el botón ya quedó visible arriba */ });
   }
 
   // activa los avisos: permiso -> llave -> suscripción -> registro en el backend
@@ -798,7 +802,7 @@
         var go = el.getAttribute('data-go');
         if (go === 'nueva') openNew();
         else if (go === 'bloquear') openBlockScreen();
-        else if (go === 'agenda') { show('agenda'); paintAgenda(); }
+        else if (go === 'agenda') { show('agenda'); paintAgenda(); renderPushBar(); }
         else show(go);
       });
     });

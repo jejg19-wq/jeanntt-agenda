@@ -284,8 +284,8 @@ select.inp{appearance:none;-webkit-appearance:none;background-image:url("data:im
   border-radius:13px;padding:12px 13px;display:flex;gap:9px;align-items:flex-start}
 .webnote svg{width:17px;height:17px;color:var(--yellow);flex:none;margin-top:1px}
 
-/* ---------- avisos push (banner en la agenda) ---------- */
-.pushbar{margin:2px 0 14px}
+/* ---------- avisos push (barra fija bajo el encabezado de la agenda) ---------- */
+.pushbar{margin:0 18px 12px}
 .pushbtn{width:100%;background:var(--magenta);color:#fff;border:none;border-radius:14px;padding:14px;
   font-family:var(--body);font-weight:800;font-size:15px;cursor:pointer;letter-spacing:.2px;
   display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 8px 20px rgba(255,31,138,.3)}
