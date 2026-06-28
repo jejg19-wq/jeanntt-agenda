@@ -1,6 +1,6 @@
 # Jeanntt Agenda 🐾
 
-PWA (app instalable) para que **Ana, Karens y Jackson** gestionen las citas del grooming
+PWA (app instalable) para que **Ana y Karens** gestionen las citas del grooming
 móvil de Jeanntt. HTML + CSS + JavaScript vanilla, **sin frameworks ni build**.
 
 > **Conectada al backend real** (`API_BASE = https://jeanntt-backend.onrender.com`).
@@ -45,7 +45,7 @@ En Android/Chrome aparece directamente **«Instalar app»**.
 
 ## Pantallas
 1. **Login** con PIN de 4 dígitos (validado contra el backend).
-2. **¿Quién eres?** (Ana / Karens / Jackson): se guarda como `creado_por` en cada cita.
+2. **¿Quién eres?** (Ana / Karens): se guarda como `creado_por` en cada cita.
 3. **Agenda**: encabezado con navegación ‹ ›, botón **Semana/Mes**, tira de la semana o
    **calendario mensual** (marca días con citas y bloqueados), **totales de $** del día y
    de la semana, lista de citas del día y botón **+** flotante.
@@ -67,7 +67,7 @@ En Android/Chrome aparece directamente **«Instalar app»**.
 ```js
 API_BASE:    'https://jeanntt-backend.onrender.com', // backend real
 AUTH_PREFIX: 'Bearer ',          // header Authorization ('' si el token va "pelado")
-USUARIOS:    ['Ana','Karens','Jackson'],   // pantalla "¿Quién eres?" + creado_por
+USUARIOS:    ['Ana','Karens'],   // pantalla "¿Quién eres?" + creado_por
 BUSQUEDA_DIAS: { atras: 540, adelante: 365 }, // rango del buscador (incluye pasadas)
 PIN:         '1234',             // solo se usa en modo demo (API_BASE vacío)
 SERVICIOS:   [ ... ]             // servicios con precio y duración por tamaño

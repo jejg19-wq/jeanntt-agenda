@@ -26,7 +26,7 @@ window.CONFIG = {
      `creado_por` al crear una cita y se muestra en el detalle.
      También sirve para detectar citas MANUALES (las que agendó
      el staff) frente a las reservas que entran por la web. */
-  USUARIOS: ['Ana', 'Karens', 'Jackson'],
+  USUARIOS: ['Ana', 'Karens'],
 
   /* ---- Buscador ----
      Rango (en días) que consulta el buscador alrededor de HOY.
